@@ -106,3 +106,69 @@ def test_sequential_calls_counts():
     switchboard.register_call("5,Foreign,+15550000005,6,Foreign,+15550000006")
     assert switchboard.get_active_calls_count() == 3
     assert switchboard.get_cross_border_calls_count() == 1
+
+
+def test_invalid_call_format_too_few_fields():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="Ожидается 6 полей"):
+        switchboard.register_call("1,Ivan Ivanov,+79990000000,2,John Smith")
+
+
+def test_invalid_call_format_too_many_fields():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="Ожидается 6 полей"):
+        switchboard.register_call("1,Ivan Ivanov,+79990000000,2,John Smith,+15551234567,extra")
+
+
+def test_empty_raw_call():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="не может быть пустой"):
+        switchboard.register_call("")
+
+
+def test_empty_field_in_call():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="не может быть пустым"):
+        switchboard.register_call("1,,+79990000000,2,John Smith,+15551234567")
+
+
+def test_invalid_caller_id_not_integer():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="должен быть числом"):
+        switchboard.register_call("abc,Ivan Ivanov,+79990000000,2,John Smith,+15551234567")
+
+
+def test_invalid_caller_id_negative():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="положительным"):
+        switchboard.register_call("-1,Ivan Ivanov,+79990000000,2,John Smith,+15551234567")
+
+
+def test_empty_fullname():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="не может быть пустым"):
+        switchboard.register_call("1,,+79990000000,2,John Smith,+15551234567")
+
+
+def test_fullname_too_short():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="минимум 2 символа"):
+        switchboard.register_call("1,A,+79990000000,2,John Smith,+15551234567")
+
+
+def test_fullname_only_digits():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="не может состоять только из цифр"):
+        switchboard.register_call("1,12345,+79990000000,2,John Smith,+15551234567")
+
+
+def test_empty_phone():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="не может быть пустым"):
+        switchboard.register_call("1,Ivan Ivanov,,2,John Smith,+15551234567")
+
+
+def test_invalid_phone_with_wrong_chars():
+    switchboard = Switchboard()
+    with pytest.raises(ValueError, match="недопустимые символы"):
+        switchboard.register_call("1,Ivan Ivanov,+7abc4567890,2,John Smith,+15551234567")
