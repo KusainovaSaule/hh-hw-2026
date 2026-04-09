@@ -2,6 +2,7 @@ import pytest
 
 from app.switchboard import Switchboard
 from app.users import ForeignUser, LocalUser
+from app.switchboard import ActiveCall
 
 
 def test_register_call_creates_local_and_foreign_users() -> None:
@@ -50,7 +51,6 @@ def test_register_call_counts_calls_between_local_and_foreign_users() -> None:
 def test_both_local():
     switchboard = Switchboard()
     active_call = switchboard.register_call("1,Ivan Ivanov,+79990000000,2,Petr Petrov,+78880000000")
-    from app.switchboard import ActiveCall
     assert isinstance(active_call, ActiveCall)
     assert isinstance(active_call.caller, LocalUser)
     assert isinstance(active_call.receiver, LocalUser)

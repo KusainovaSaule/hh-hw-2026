@@ -8,6 +8,7 @@ from app.users.foreign_user import ForeignUser
 
 
 LOCAL_PHONE_PREFIX = "+7"
+ALLOWED_PHONE_CHARS = set("0123456789+- ")
 
 
 @dataclass(slots=True)
@@ -25,7 +26,9 @@ class Switchboard:
         self._active_calls: list[ActiveCall] = []
         self._cross_border_count = 0
 
-    def _validate_and_create_user(self, user_id: str, fullname: str, phone: str) -> User:
+    def _validate_and_create_user(self, user_data: list[str]) -> User:
+        user_id, fullname, phone = user_data
+        
         if not user_id or not user_id.strip():
             raise ValueError("Id пользователя не может быть пустым")
         
@@ -53,8 +56,7 @@ class Switchboard:
         
         phone_clean = phone.strip()
         
-        allowed_chars = set("0123456789+- ")
-        if not all(c in allowed_chars for c in phone_clean):
+        if not all(c in ALLOWED_PHONE_CHARS for c in phone_clean):
             raise ValueError("Номер телефона содержит недопустимые символы")
         
         if phone_clean.startswith(LOCAL_PHONE_PREFIX):
@@ -72,24 +74,17 @@ class Switchboard:
         if not raw_call or not isinstance(raw_call, str):
             raise ValueError("Строка вызова не может быть пустой")
         
-        parts = raw_call.split(',')
+        parts = [p.strip() for p in raw_call.split(',')]
         
         if len(parts) != 6:
             raise ValueError(f"Неверный формат вызова. Ожидается 6 полей, получено {len(parts)}")
         
         for i, part in enumerate(parts):
-            if not part or not part.strip():
+            if not part:
                 raise ValueError(f"Поле {i} не может быть пустым")
         
-        caller_id = parts[0].strip()
-        caller_name = parts[1].strip()
-        caller_phone = parts[2].strip()
-        receiver_id = parts[3].strip()
-        receiver_name = parts[4].strip()
-        receiver_phone = parts[5].strip()
-        
-        caller = self._validate_and_create_user(caller_id, caller_name, caller_phone)
-        receiver = self._validate_and_create_user(receiver_id, receiver_name, receiver_phone)
+        caller = self._validate_and_create_user(parts[:3])
+        receiver = self._validate_and_create_user(parts[3:])
         
         active_call = ActiveCall(caller=caller, receiver=receiver)
         self._active_calls.append(active_call)
@@ -104,3 +99,4 @@ class Switchboard:
 
     def get_cross_border_calls_count(self) -> int:
         return self._cross_border_count
+    
